@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/logo1%20(2).png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Boombah 2026</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; overflow-x: hidden; }
+
+        /* NAVEGACIÓN SUPERIOR */
+        nav { background: #1a1a1a; padding: 0 20px; display: flex; justify-content: center; box-shadow: 0 2px 15px rgba(0,0,0,0.4); position: sticky; top: 0; z-index: 1000; }
+        .nav-button { padding: 18px 30px; cursor: pointer; color: #bbb; border: none; background: none; font-size: 14px; font-weight: 700; text-transform: uppercase; transition: 0.3s; border-bottom: 3px solid transparent; letter-spacing: 1px; }
+        .nav-button:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-button.active { color: #007bff; border-bottom: 3px solid #007bff; background: rgba(0,123,255,0.05); }
+
+        .section { display: none; min-height: calc(100vh - 60px); position: relative; animation: fadeIn 0.5s ease; }
+        .section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* SECCIÓN BUSCADOR (FONDO BLANCO CON LOGO DIFUMINADO) */
+        #planos { 
+            background: #ffffff; /* Fondo blanco sólido */
+            position: relative;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 50px;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LOGO GIGANTE Y DIFUMINADO DE FONDO */
+        #planos::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%; /* Tamaño gigante como en la imagen */
+            height: 80%;
+            background: url('file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/logo1%20(2).png') no-repeat center;
+            background-size: contain;
+            opacity: 0.06; /* Muy tenue para que no estorbe la vista */
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #planos.active { display: flex; }
+
+        /* TÍTULO NEGRO ARRIBA */
+        #planos h2 { 
+            color: #000; 
+            font-size: 22px; 
+            font-weight: 800;
+            margin-bottom: 20px; 
+            z-index: 1;
+        }
+
+        /* BARRA DE BÚSQUEDA HORIZONTAL SIMPLE */
+        .search-container { 
+            background: transparent; 
+            padding: 0; 
+            box-shadow: none; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            width: 100%;
+            gap: 12px;
+        }
+
+        #search-input { 
+            padding: 10px 15px; 
+            width: 300px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px 0 0 4px; 
+            outline: none;
+            font-size: 14px;
+        }
+
+        #search-button { 
+            padding: 10px 20px; 
+            background: #007bff; 
+            color: white; 
+            border: 1px solid #007bff; 
+            border-radius: 0 4px 4px 0; 
+            font-weight: bold; 
+            cursor: pointer;
+        }
+
+        /* IMÁGENES DE PLANOS */
+        .image-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin-top: 40px; padding: 20px; width: 100%; z-index:1; }
+        .image-container img { display: none; max-width: 400px; border-radius: 12px; border: 5px solid white; box-shadow: 0 15px 35px rgba(0,0,0,0.4); cursor: pointer; transition: 0.3s; }
+        .image-container img.active { display: block; }
+        .image-container img:hover { transform: scale(1.03); }
+
+        /* SECCIÓN WIP */
+        #wip { padding: 20px; }
+        .sheet-card { background: white; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.15); overflow: hidden; max-width: 1500px; margin: 0 auto; }
+        .view-header { padding: 15px; background: #fff; display: flex; justify-content: center; gap: 15px; border-bottom: 1px solid #eee; align-items: center; }
+        .btn-view { padding: 12px 25px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 14px; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(40,167,69,0.15); }
+        .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40,167,69,0.25); }
+        .btn-view:active { transform: translateY(0); }
+        .btn-general { background: #6c757d; box-shadow: 0 2px 8px rgba(108,117,125,0.15); }
+        .btn-general:hover { box-shadow: 0 4px 12px rgba(108,117,125,0.25); }
+
+        .iframe-wrapper { width: 100%; height: 750px; overflow: hidden; position: relative; }
+       #google-sheet {
+    position: absolute;
+    top: -135px; 
+    left: -42px;
+    width: calc(100% + 55px);
+    height: calc(100% + 160px);
+    border: none;
+}
+
+
+        /* ZOOM MODAL */
+        #zoom-viewport { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; }
+        #zoom-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: crosshair; }
+        #zoom-img { max-width: 85%; max-height: 85%; border: 3px solid #333; }
+        #lupa { position: absolute; border: 3px solid #fff; border-radius: 50%; width: 250px; height: 250px; pointer-events: none; display: none; background-repeat: no-repeat; z-index: 2001; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .btn-close { position: fixed; top: 20px; right: 20px; padding: 15px 30px; background: #ff4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 16px; }
+        /* MANUAL PDF VIEWER */
+        .manual-card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 1400px; margin: 40px auto; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); display: flex; height: 85vh; }
+        .manual-sidebar { width: 320px; background: linear-gradient(180deg, #f8f9fb 0%, #f3f5f9 100%); border-right: 1px solid rgba(0,0,0,0.06); overflow-y: auto; max-height: 85vh; padding: 12px 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .manual-sidebar.collapsed { width: 70px; padding: 12px 8px; }
+        .manual-sidebar.collapsed .manual-menu-section { display: none; }
+        .manual-sidebar.collapsed .manual-menu-item, .manual-sidebar.collapsed .manual-submenu { padding: 8px 6px; text-indent: -9999px; height: 32px; display: flex; align-items: center; justify-content: center; margin: 2px 0; }
+        .manual-sidebar.collapsed .manual-menu-item:before { content: '═'; text-indent: 0; font-size: 16px; color: #005da6; }
+        .manual-toggle { position: absolute; top: 12px; right: 12px; background: #005da6; color: white; border: none; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; z-index: 10; }
+        .manual-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .manual-panel { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; display: none; flex-direction: column; z-index: 20; border-radius: 0 16px 16px 0; overflow: hidden; animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .manual-panel.active { display: flex; }
+        .manual-panel-header { padding: 16px 24px; border-bottom: 1px solid rgba(0,0,0,0.08); background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%); display: flex; justify-content: space-between; align-items: center; }
+        .manual-panel-header h3 { margin: 0; color: #1a3a52; font-size: 16px; font-weight: 700; }
+        .manual-panel-close { background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.3s ease; }
+        .manual-panel-close:hover { background: #ff5252; }
+        .manual-panel-content { flex: 1; overflow-y: auto; }
+        .manual-panel-content iframe { width: 100%; height: 100%; border: none; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .manual-menu-item { padding: 10px 16px 10px 28px; cursor: pointer; border-left: 3px solid transparent; color: #555; font-size: 12px; font-weight: 500; transition: all 0.3s ease; }
+        .manual-menu-item:hover { background: rgba(0,93,166,0.08); color: #005da6; border-left-color: #005da6; }
+        .manual-menu-item.active { background: rgba(0,93,166,0.12); color: #005da6; border-left-color: #005da6; font-weight: 600; }
+        .manual-submenu { padding: 8px 16px 8px 40px; cursor: pointer; color: #777; font-size: 11px; font-weight: 400; transition: all 0.3s ease; border-left: 3px solid transparent; }
+        .manual-submenu:hover { background: rgba(0,93,166,0.05); color: #005da6; border-left-color: #005da6; padding-left: 48px; }
+        .manual-submenu.active { color: #005da6; font-weight: 500; background: rgba(0,93,166,0.08); border-left-color: #005da6; }
+        .manual-menu-section { padding: 14px 16px 8px 16px; color: #005da6; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; background: rgba(0,93,166,0.04); margin-top: 6px; border-left: 3px solid #005da6; }
+        .pdf-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.06); background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%); }
+        .pdf-toolbar > div:first-child { font-weight: 600; font-size: 15px; color: #1a1a2e; letter-spacing: 0.3px; }
+        .pdf-actions { display: flex; gap: 10px; align-items: center; }
+        .pdf-actions .btn-view { background: linear-gradient(135deg, #005da6 0%, #003d7a 100%); padding: 10px 20px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,93,166,0.15); transition: all 0.3s ease; }
+        .pdf-actions .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,93,166,0.25); }
+        .pdf-actions .btn-view:active { transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+    <nav>
+    <img src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/logo1%20(2).png" alt="Logo" style="height: 40px; margin: 10px 20px; vertical-align: middle;">
+    <button class="nav-button active" onclick="showTab('planos', this)">Buscador de Planos</button>
+    <button class="nav-button" onclick="showTab('wip', this)">Control WIP 2026</button>
+    <button class="nav-button" onclick="showTab('reemplazos', this)">Historial Reemplazos</button>
+    <button class="nav-button" onclick="showTab('manual', this)">Manual de Producción</button>
+
+</nav>
+
+    <!-- SECCIÓN BUSCADOR -->
+    <section id="planos" class="section active">
+        <div class="search-container">
+            <h2>Buscador de Planos</h2>
+            <input type="text" id="search-input" placeholder="Código (ej: 9021)">
+            <button id="search-button">BUSCAR AHORA</button>
+      </div>
+
+    <div class="image-container">
+        <!-- Tus imágenes (9021, 9025, etc.) -->
+        <!-- Mantén aquí todas tus etiquetas <img> originales -->
+        <img id="BM-9021" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9021_Superpack/BM/BPSP-B_B.jpg">
+        <img id="PS-9021" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9021_Superpack/PS/BPSPCM-B-C_B.jpg">
+        <img id="BM-9025 600D" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9025_Diamond-Duffle/BM/BM-9025-600D.PNG">
+        <img id="BM-9014" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9014_Mini%20Superpack/BM/BM-9014-B-B_B.jpg">
+        <img id="PS-9014" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9014_Mini%20Superpack/PS/PS-9014-3001-B-C_B.jpg">
+        <img id="BM-9068" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9068_DEFCON%20Superpack%20XL/BM/BM-9068-B_B.jpg">
+        <img id="BM-9088" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9088_Ultrapack_Hybrid/BM/BM-9088-B-RD_B.jpg">
+        <img id="PS-9088" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9088_Ultrapack_Hybrid/PS/PS-9088-3000-B-CB_B.jpg">
+        <img id="BM-9124" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9124_Catchers_Rolling/BM/BM-9124-B_B.jpg">
+        <img id="PS-9124" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9124_Catchers_Rolling/PS/PS-9124-3000-B-C_B.jpg">
+        <img id="BM-9092" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9092_Sports%20Duffle/9044/BM/BM-9092-CB_B.jpg">
+        <img id="BM-9000" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9000_Tyro/BM/BPT-B_B.jpg">
+        <img id="PS-9000" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9000_Tyro/PS/BPTCM-B-CB_B.jpg">
+        <img id="BM-9024" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9024_Catchers_Superpack/BM/BM-9024-B_B.jpg">
+        <img id="PS-9024" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9024_Catchers_Superpack/PS/PS-9024-3000-B-CB_B.jpg">
+        <img id="BM-9037" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9037_Rolling_Superpack/BM/BRSP2-B_B.jpg">
+        <img id="PS-9037" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/9037_Rolling_Superpack/PS/BRSP2CM-B-CRD_B.jpg">
+        <img id="BM-9043" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9043_Beast/BM/BB2-B_B.jpg">
+        <img id="PS-9043" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9043_Beast/PS/PS-9043-3001-B-CB_B.jpg">
+        <img id="BM-9045" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9044_Brute/BM/BBR2-B_B.jpg">
+        <img id="BM-9049" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9049_Prospect/BM/_BM-9049_Master%20Color%20Map-01.jpg">
+        <img id="BM-9051" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9051_Hybrid_Superpack/BM/BM-9051-B_B.jpg">
+        <img id="PS-9051" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9051_Hybrid_Superpack/PS/PS-9051-3000-B-C_B.jpg">
+        <img id="BM-9053" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9053_Superpack_XL/BM/BM-9053-B_B.jpg">
+        <img id="PS-9053" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9053_Superpack_XL/PS/PS-9053-3001_B-CB_B.jpg">
+        <img id="BM-9060" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9060_Hybrid%20Catchers/BM/BM-9060-B_B.jpg">
+        <img id="PS-9060" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9060_Hybrid%20Catchers/PS/PS-9060-3000-B-C_B.jpg">
+        <img id="BM-9066" src="file:///P:/Product%20Development/user/Juan%20Mercado/BD%20icm/9066_DEFCON%20Rolling%20Superpack/BM/BM-9066-B_B.jpg">
+        <img id="FD-9000" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9000.jpg">
+        <img id="FD-9003" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9003.jpg">
+        <img id="FD-9008" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9005.jpg">
+        <img id="FD-9006" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9006.jpg">
+        <img id="FD-9007" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9007.jpg">
+        <img id="FD-9008" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9008.jpg">
+        <img id="FD-9010" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9010.jpg">
+        <img id="FD-9012" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9012.jpg">
+        <img id="FD-9014" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9014.jpg">
+        <img id="FD-9017" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9017.jpg">
+        <img id="FD-9019" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9019.jpg">
+        <img id="FD-9020" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9020.jpg">
+        <img id="FD-9021" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9021.jpg">
+        <img id="FD-9022" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9022.jpg">
+        <img id="FD-9024" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9024.jpg">
+        <img id="FD-9026" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9026.jpg">
+        <img id="FD-9030" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9030.jpg">
+        <img id="FD-9031" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9031.jpg">
+        <img id="FD-9032" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9032.jpg">
+        <img id="FD-9036" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9036.jpg">
+        <img id="FD-9037" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9037.jpg">
+        <img id="FD-9039" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9039.jpg">
+        <img id="FD-9043" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9043.jpg">
+        <img id="FD-9044" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9044.jpg">
+        <img id="FD-9045" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9045.jpg">
+        <img id="FD-9047" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9047.jpg">
+        <img id="FD-9049" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9049.jpg">
+        <img id="FD-9051" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9051.jpg">
+        <img id="FD-9053" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9053.jpg">
+        <img id="FD-9057" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9057.jpg">
+        <img id="FD-9058" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9058.jpg">
+        <img id="FD-9060" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9060.jpg">
+        <img id="FD-9061" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9061.jpg">
+        <img id="FD-9066" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9066.jpg">
+        <img id="FD-9124" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9124.jpg">
+        <img id="FD-9143" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9143.jpg">
+        <img id="FD-9145" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9145.jpg">
+        <img id="PS-281W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-281W.jpg">
+        <img id="PS-4070" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-4070.jpg">
+        <img id="PS-4070W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-4070W.jpg">
+        <img id="PS-4077W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-4077W.jpg">
+        <img id="PS-5066" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-5066.jpg">
+        <img id="PS-5075" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-5075.jpg">
+        <img id="PS-5075W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-5075W.jpg">
+        <img id="PS-5082" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-5082.jpg">
+        <img id="PS-5082W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-5082W.jpg">
+        <img id="PS-5113W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-5113W.jpg">
+        <img id="PS-6036" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-6036.jpg">
+        <img id="PS-6044" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/PS-6044.jpg">
+        <img id="FD-10003" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-10003.jpg">
+        <img id="FD-10004" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-10004.jpg">
+        <img id="FD-10005" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-10005.jpg">
+        <img id="FD-1007W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-1007W.jpg">
+        <img id="FD-105" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-105.jpg">
+        <img id="FD-115" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-115.jpg">
+        <img id="FD-121" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-121.jpg">
+        <img id="FD-137" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-137.jpg">
+        <img id="FD-161" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-161.jpg">
+        <img id="FD-163" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-163.jpg">
+        <img id="FD-1700W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-1700W.jpg">
+        <img id="FD-170W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-170W.jpg">
+        <img id="FD-1873" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-1873.jpg">
+        <img id="FD-1874" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-1874.jpg">
+        <img id="FD-204" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-204.jpg">
+        <img id="FD-205" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-205.jpg">
+        <img id="FD-2050" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-2050.jpg">
+        <img id="FD-206" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-206.jpg">
+        <img id="FD-207" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-207.jpg">
+        <img id="FD-2076" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-2076.jpg">
+        <img id="FD-2076W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-2076W.jpg">
+        <img id="FD-2100W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-2100W.jpg">
+        <img id="FD-2108W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-2108W.jpg">
+        <img id="FD-212" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-212.jpg">
+        <img id="FD-2120" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-2120.jpg">
+        <img id="FD-215" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-215.jpg">
+        <img id="FD-217" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-217.jpg">
+        <img id="FD-218" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-218.jpg">
+        <img id="FD-219" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-219.jpg">
+        <img id="FD-220" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-220.jpg">
+        <img id="FD-220W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-220W.jpg">
+        <img id="FD-221" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-221.jpg">
+        <img id="FD-221W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-221W.jpg">
+        <img id="FD-223" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-223.jpg">
+        <img id="FD-228" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-228.jpg">
+        <img id="FD-229" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-229.jpg">
+        <img id="FD-230" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-230.jpg">
+        <img id="FD-233" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-233.jpg">
+        <img id="FD-234" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-234.jpg">
+        <img id="FD-240W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-240W.jpg">
+        <img id="FD-243W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-243W.jpg">
+        <img id="FD-246W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-246W.jpg">
+        <img id="FD-261" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-261.jpg">
+        <img id="FD-3003W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3003W.jpg">
+        <img id="FD-3007" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3007.jpg">
+        <img id="FD-3011W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3011W.jpg">
+        <img id="FD-3016W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3016W.jpg">
+        <img id="FD-3018" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3018.jpg">
+        <img id="FD-3019W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3019W.jpg">
+        <img id="FD-3037W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3037W.jpg">
+        <img id="FD-3050" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3050.jpg">
+        <img id="FD-3052" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3052.jpg">
+        <img id="FD-3064" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3064.jpg">
+        <img id="FD-3094" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3094.jpg">
+        <img id="FD-3096" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3096.jpg">
+        <img id="FD-3096W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3096W.jpg">
+        <img id="FD-3099W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3099W.jpg">
+        <img id="FD-3107" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3107.jpg">
+        <img id="FD-312" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3121.jpg">
+        <img id="FD-3129" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3129.jpg">
+        <img id="FD-3132" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3132.jpg">
+        <img id="FD-3145" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3145.jpg">
+        <img id="FD-3181" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3181.jpg">
+        <img id="FD-3182" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3182.jpg">
+        <img id="FD-3182W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3182W.jpg">
+        <img id="FD-3183" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3183.jpg">
+        <img id="FD-3183W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3183W.jpg">
+        <img id="FD-3184W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3184W.jpg">
+        <img id="FD-3185W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3185W.jpg">
+        <img id="FD-3185" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3185.jpg">
+        <img id="FD-3417" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-3417.jpg">
+        <img id="FD-400" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-400.jpg">
+        <img id="FD-4005" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4005.jpg">
+        <img id="FD-4033" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4033.jpg">
+        <img id="FD-4035" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4035.jpg">
+        <img id="FD-4052" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4052.jpg">
+        <img id="FD-4089" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4089.jpg">
+        <img id="FD-410" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-410.jpg">
+        <img id="FD-4128" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4128.jpg">
+        <img id="FD-415" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-415.jpg">
+        <img id="FD-420" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-420.jpg">
+        <img id="FD-4416W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4416W.jpg">
+        <img id="FD-4500" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-4500.jpg">
+        <img id="FD-45000" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-45000.jpg">
+        <img id="FD-477" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-477.jpg">
+        <img id="FD-486" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-486.jpg">
+        <img id="FD-487" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-487.jpg">
+        <img id="FD-500W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-500W.jpg">
+        <img id="FD-5036W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5036W.jpg">
+        <img id="FD-5060" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5060.jpg">
+        <img id="FD-5060W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5060W.jpg">
+        <img id="FD-5066" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5066.jpg">
+        <img id="FD-5070W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5070W.jpg">
+        <img id="FD-5077" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5077.jpg">
+        <img id="FD-5110" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5110.jpg">
+        <img id="FD-5120W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5120W.jpg">
+        <img id="FD-5121" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5121.jpg">
+        <img id="FD-5142" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5142.jpg">
+        <img id="FD-5162" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5162.jpg">
+        <img id="FD-5165W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5165W.jpg">
+        <img id="FD-5170W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5170W.jpg">
+        <img id="FD-5171W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5170W.jpg">
+        <img id="FD-5252W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5252W.jpg">
+        <img id="FD-5421" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5421.jpg">
+        <img id="FD-5422" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5422.jpg">
+        <img id="FD-5423" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5423.jpg">
+        <img id="FD-5424" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5424.jpg">
+        <img id="FD-5425" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5425.jpg">
+        <img id="FD-5426" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5426.jpg">
+        <img id="FD-5427" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5427.jpg">
+        <img id="FD-5428" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5428.jpg">
+        <img id="FD-5430" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-5430.jpg">
+        <img id="FD-597W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-597W.jpg">
+        <img id="FD-6000" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6000.jpg">
+        <img id="FD-6002" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6002.jpg">
+        <img id="FD-6002W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6002W.jpg">
+        <img id="FD-6003" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6003.jpg">
+        <img id="FD-6004W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6004W.jpg">
+        <img id="FD-6009" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6009.jpg">
+        <img id="FD-6010" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6010.jpg">
+        <img id="FD-6011" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6011.jpg">
+        <img id="FD-6036" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6036.jpg">
+        <img id="FD-6041" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6041.jpg">
+        <img id="FD-6052" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6052.jpg">
+        <img id="FD-6061" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6061.jpg">
+        <img id="FD-6062" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6062.jpg">
+        <img id="FD-6063" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6063.jpg">
+        <img id="FD-6067W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6067W.jpg">
+        <img id="FD-609" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-609.jpg">
+        <img id="FD-611" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-611.jpg">
+        <img id="FD-6112W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-6112W.jpg">
+        <img id="FD-618" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-618.jpg">
+        <img id="FD-619" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-619.jpg">
+        <img id="FD-622" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-622.jpg">
+        <img id="FD-650" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-650.jpg">
+        <img id="682" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-682.jpg">
+        <img id="FD-692" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-692.jpg">
+        <img id="FD-7020" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7020.jpg">
+        <img id="FD-7021" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7021.jpg">
+        <img id="FD-7033" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7033.jpg">
+        <img id="FD-7034" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7034.jpg">
+        <img id="FD-7035" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7035.jpg">
+        <img id="FD-7051" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7051.jpg">
+        <img id="FD-7071" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7071.jpg">
+        <img id="FD-7077" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-7077.jpg">
+        <img id="FD-751W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-751W.jpg">
+        <img id="FD-762W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-762W.jpg">
+        <img id="FD-828" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-828.jpg">
+        <img id="FD-829W" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-829W.jpg">
+        <img id="FD-857" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-857.jpg">
+        <img id="FD-858" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-858.jpg">
+        <img id="FD-872" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-872.jpg">
+        <img id="BM-9010" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9010%20RB-RD%20B_page-0001.jpg">
+        <img id="BM-9025 420D" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9025-420D.PNG">
+        <img id="BM-9031" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9031_page-0002.jpg">
+        <img id="BM-9043" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9043%20B-TL_page-0002.jpg">
+        <img id="BM-9060" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9060%20%20B-GY.jpg">
+        <img id="BM-9068" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9068%20B-O-B_page-0002.jpg">
+        <img id="BM-9092" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/BM-9092%20CB%20A-B_page-0002.jpg">
+        <img id="PS-9053" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/PS-9053-3001_B-CB_page-0001.jpg">
+        <img id="BM-9053" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/PS-9053-3001_B-CB_page-0001.jpg">
+        <img id="FORRO 9088" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FORROS%209088.png">
+        <img id="FD-9047" src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/FD/FD-9047.jpg">
+        <img id="" src="">
+             
+
+</div>
+    </section>
+
+    <!-- SECCIÓN WIP -->
+    <section id="wip" class="section">
+        <div class="sheet-card">
+            <div class="view-header">
+                <strong>Filtros WIP:</strong>
+                <button class="btn-view btn-general" onclick="cambiarVista('2070562325', '')">Vista General</button>
+                <button class="btn-view" onclick="cambiarVista('2070562325', '1408785243')">Agrupar por Contratos</button>
+            </div>
+            <div class="iframe-wrapper">
+                <iframe id="google-sheet" src="https://docs.google.com/spreadsheets/d/19LSYonLfdDZbfVpNe_ztKcmFYYxHqOhsH_IJ_7mE4_E/edit?gid=2070562325#gid=2070562325"></iframe>
+            </div>
+        </div>
+    </section>
+
+<!-- SECCIÓN REEMPLAZOS -->
+<section id="reemplazos" class="section">
+    <div style="padding: 20px;">
+        <div class="sheet-card">
+            <div class="view-header" style="background: #f8f9fa; border-bottom: 2px solid #007bff; display: flex; justify-content: center; align-items: center; padding: 15px;">
+                <label style="font-weight: bold; margin-right: 15px;">SELECCIONAR MES:</label>
+                <select onchange="cambiarMes(this.value)" style="padding: 10px; border-radius: 5px; border: 1px solid #007bff; cursor: pointer; font-weight: bold;">
+                    <option value="0">FEBRERO 2026</option>
+                    <option value="1">ENERO 2026</option>
+                    <option value="2">DICIEMBRE 2025</option>
+                </select>
+            </div>
+            <div class="iframe-wrapper">
+                <iframe id="iframe-reemplazos" style="position: absolute; top: -178px; left: -42px; width: calc(100% + 55px); height: calc(100% + 230px); border: none;" 
+                    src="https://docs.google.com/spreadsheets/d/1Er34LuDCujtnMPatu9o4AIkVQwnIQZEdB9sdx_zS8KY/edit?gid=750106927#gid=750106927"></iframe>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECCIÓN MANUAL DE PRODUCCIÓN -->
+<section id="manual" class="section">
+    <div class="manual-card">
+        <div class="manual-sidebar" id="manualSidebar">
+            <button class="manual-toggle" id="sidebarToggle" onclick="toggleSidebar()">✕</button>
+            <div class="manual-menu-section">SECCIÓN 1</div>
+            <div class="manual-menu-item" onclick="showManualSection('sec1-1', '1.1. Recolección de Reportes')">Digitación y Recolección</div>
+            <div class="manual-submenu" onclick="showManualSection('sec1-1', '1.1. Recolección de Reportes')">├ Recolección de Reportes</div>
+            <div class="manual-submenu" onclick="showManualSection('sec1-2', '1.2. Digitación de Reportes Diarios')">└ Digitación de Reportes</div>
+
+            <div class="manual-menu-section">SECCIÓN 2</div>
+            <div class="manual-menu-item" onclick="showManualSection('sec2', '2. Digitación Correcta de Reportes')">Digitación Correcta</div>
+            <div class="manual-submenu" onclick="showManualSection('sec2-1', '2.1. Coincidencia de PO Digitado')">├ Coincidencia de PO</div>
+            <div class="manual-submenu" onclick="showManualSection('sec2-2', '2.2. Cantidad de Más de una Parte')">├ Cantidad de Más de una Parte</div>
+            <div class="manual-submenu" onclick="showManualSection('sec2-3', '2.3. Detalles y Descripción')">├ Detalles y Descripción</div>
+            <div class="manual-submenu" onclick="showManualSection('sec2-4', '2.4. Validación')">├ Validación</div>
+            <div class="manual-submenu" onclick="showManualSection('sec2-5', '2.5. Error en Coincidencia de Estilo')">└ Error en Coincidencia</div>
+
+            <div class="manual-menu-section">SECCIÓN 3</div>
+            <div class="manual-menu-item" onclick="showManualSection('sec3', '3. Actualización de Cantidades Capturadas')">Actualización de Cantidades</div>
+            <div class="manual-submenu" onclick="showManualSection('sec3-1', '3.1. Reporte NS')">├ Reporte NS</div>
+            <div class="manual-submenu" onclick="showManualSection('sec3-2', '3.2. Colocación de Información')">├ Colocación de Información</div>
+            <div class="manual-submenu" onclick="showManualSection('sec3-3', '3.3. Guardar de Información')">├ Guardar Información</div>
+            <div class="manual-submenu" onclick="showManualSection('sec3-4', '3.4. Pegado de Información en Cuadre')">├ Pegado en Cuadre</div>
+            <div class="manual-submenu" onclick="showManualSection('sec3-5', '3.5. Verificación Automática')">└ Verificación Automática</div>
+
+            <div class="manual-menu-section">SECCIÓN 4</div>
+            <div class="manual-menu-item" onclick="showManualSection('sec4', '4. Seguimiento de Órdenes Abiertas')">Seguimiento de Órdenes</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-1', '4.1. Selección de Órdenes Incompletas')">├ Órdenes Incompletas</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-2', '4.2. Actualización Base de Datos')">├ Base de Datos de Contratos</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-3', '4.3. Marcas de Captura (Full Dye)')">├ Marcas Full Dye</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-4', '4.4. Procedimiento para Mochilas')">├ Procedimiento Mochilas</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-5', '4.5. Casilla de Verificación')">├ Casilla Verificación</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-6', '4.6. Anotación en INCOMPLETAS')">├ Anotación en INCOMPLETAS</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-7', '4.7. Organización y Validación')">├ Organización de Partes</div>
+            <div class="manual-submenu" onclick="showManualSection('sec4-8', '4.8. Órdenes de STOCK')">└ Órdenes STOCK</div>
+
+            <div class="manual-menu-section">SECCIÓN 5</div>
+            <div class="manual-menu-item" onclick="showManualSection('sec5', '5. Captura de Producción')">Captura de Producción</div>
+            <div class="manual-submenu" onclick="showManualSection('sec5-1', '5.1. Creación de Programa')">├ Crear Programa</div>
+            <div class="manual-submenu" onclick="showManualSection('sec5-2', '5.2. Abrir Captura de Producción')">├ Abrir Captura</div>
+            <div class="manual-submenu" onclick="showManualSection('sec5-3', '5.3. Insertar Información')">├ Insertar Información</div>
+            <div class="manual-submenu" onclick="showManualSection('sec5-4', '5.4. Llenado de Campos')">├ Llenado de Campos</div>
+            <div class="manual-submenu" onclick="showManualSection('sec5-5', '5.5. Captura de la Producción')">└ Captura de Producción</div>
+
+            <div class="manual-menu-section">SECCIÓN 6</div>
+            <div class="manual-menu-item" onclick="showManualSection('sec6', '6. Digitación Team Spirit')">Team Spirit (TS)</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-1', '6.1. Subida de Archivo TS')">├ Subida de Archivo TS</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-2', '6.2. Copiar en Hoja Existente')">├ Copiar en Hoja Existente</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-3', '6.3. Ubicar y Nombrar Hoja')">├ Ubicar y Nombrar Hoja</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-4', '6.4. Corrección de Fórmula TS')">├ Corrección de Fórmula</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-5', '6.5. Corregir Prefijos')">├ Corregir Prefijos</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-6', '6.6. Mostrar Celda Asignada')">├ Mostrar Celda Asignada</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-7', '6.7. Fórmula de Concatenación')">├ Fórmula de Concatenación</div>
+            <div class="manual-submenu" onclick="showManualSection('sec6-8', '6.8. - 6.12. Proceso Filtrado Final')">└ Filtrado y Formato Final</div>
+        </div>
+        <div class="manual-content">
+            <div class="pdf-toolbar">
+                <div style="font-weight:600;">Manual de Producción — Production Control Ultimate 2026</div>
+                <div class="pdf-actions">
+                    <button class="btn-view" onclick="window.open('file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/TestPJCT/Manual-Control-Produccion-Ultimate.html', '_blank')">Abrir Manual Completo</button>
+                </div>
+            </div>
+            <div style="padding: 20px 24px 24px;">
+                <div style="background: linear-gradient(135deg, #f0f4ff 0%, #f5f7ff 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #005da6; text-align: center;">
+                    <div style="font-size: 16px; font-weight: 600; color: #1a3a52; margin-bottom: 12px;">📖 Manual Interactivo de Control de Producción</div>
+                    <p style="color: #555; margin-bottom: 16px; font-size: 14px;">Utiliza el menú lateral para navegar por las diferentes secciones del manual. Haz clic en cualquier tema para acceder directamente a esa sección.</p>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-top: 16px;">
+                        <strong style="color: #005da6;">Secciones Disponibles:</strong>
+                        <div style="text-align: left; margin-top: 12px; font-size: 13px; color: #666;">
+                            <div>✓ Digitación y Recolección de Reportes</div>
+                            <div>✓ Digitación Correcta de Reportes</div>
+                            <div>✓ Actualización de Cantidades Capturadas</div>
+                            <div>✓ Seguimiento de Órdenes Abiertas</div>
+                            <div>✓ Captura de Producción</div>
+                            <div>✓ Digitación de Team Spirit (TS)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="manual-panel" id="manualPanel">
+                <div class="manual-panel-header">
+                    <h3 id="panelTitle">📖 Sección del Manual</h3>
+                    <button class="manual-panel-close" onclick="closeManualPanel()">✕ Cerrar</button>
+                </div>
+                <div class="manual-panel-content">
+                    <iframe id="manualPanelIframe" src="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- MODAL ZOOM (consolidado) -->
+    <div id="zoom-viewport" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index:2000;">
+        <button class="btn-close" onclick="closeZoom()">Cerrar ×</button>
+        <div id="zoom-wrapper">
+            <div id="lupa"></div>
+            <img id="zoom-img" src="" draggable="false">
+        </div>
+    </div>
+
+    <script>
+        // Consolidated JS: navigation, search, zoom, iframes
+
+        // Preload
+        (function(){
+            const bgImg = new Image();
+            bgImg.src = "file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/logo1%20(2).png";
+        })();
+
+        // Selectors
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const images = Array.from(document.querySelectorAll('.image-container img'));
+        const zoomViewport = document.getElementById('zoom-viewport');
+        const zoomImg = document.getElementById('zoom-img');
+        const lupa = document.getElementById('lupa');
+
+        // Navigation (single implementation)
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.section').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if (!target) return;
+            target.classList.add('active');
+            btn && btn.classList.add('active');
+            target.style.display = (tabId === 'planos') ? 'flex' : 'block';
+        }
+
+        // Unified search (input, button, enter)
+        function realizarBusqueda() {
+            const filtro = (searchInput.value || '').toUpperCase().trim();
+            images.forEach(img => {
+                const id = (img.id || '').toUpperCase();
+                const show = filtro !== '' && id.includes(filtro);
+                img.style.display = show ? 'block' : 'none';
+                img.classList.toggle('active', show);
+            });
+        }
+        searchInput && searchInput.addEventListener('input', realizarBusqueda);
+        searchButton && searchButton.addEventListener('click', realizarBusqueda);
+        searchInput && searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') realizarBusqueda(); });
+
+        // Image click -> open zoom
+        images.forEach(img => {
+            img.addEventListener('click', () => {
+                if (!img.src) return;
+                zoomImg.src = img.src;
+                lupa.style.backgroundImage = `url('${img.src}')`;
+                zoomViewport.style.display = 'block';
+            });
+        });
+
+        // Zoom controls: wheel to scale, mouse for lupa
+        let isPressing = false;
+        let zoomLevel = 2.5;
+
+        zoomViewport.addEventListener('mousedown', (e) => { isPressing = true; lupa.style.display = 'block'; updateLupa(e); });
+        window.addEventListener('mouseup', () => { isPressing = false; lupa.style.display = 'none'; });
+        zoomViewport.addEventListener('mousemove', (e) => { if (!isPressing) return; updateLupa(e); });
+        zoomViewport.addEventListener('wheel', (e) => { if (!isPressing) return; e.preventDefault(); zoomLevel = Math.min(Math.max(1, zoomLevel + (e.deltaY > 0 ? -0.3 : 0.3)), 6); updateLupa(e); }, { passive: false });
+
+        function updateLupa(e) {
+            const rect = zoomImg.getBoundingClientRect();
+            lupa.style.left = (e.clientX - 125) + 'px';
+            lupa.style.top = (e.clientY - 125) + 'px';
+            const px = ((e.clientX - rect.left) / rect.width) * 100;
+            const py = ((e.clientY - rect.top) / rect.height) * 100;
+            lupa.style.backgroundPosition = `${px}% ${py}%`;
+            lupa.style.backgroundSize = `${rect.width * zoomLevel}px ${rect.height * zoomLevel}px`;
+        }
+
+        function closeZoom() { zoomViewport.style.display = 'none'; isPressing = false; lupa.style.display = 'none'; }
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeZoom(); });
+
+        // Iframe helpers
+        function cambiarVista(gid, fvid) {
+            const iframe = document.getElementById('google-sheet');
+            if (!iframe) return;
+            let url = `https://docs.google.com/spreadsheets/d/19pptnBritGGldxctln3hy9ftU79R5eHFz78PzYIzWJc/edit?gid=${gid}`;
+            if (fvid) url += `&fvid=${fvid}`;
+            iframe.src = url;
+        }
+
+        function cambiarMes(indice) {
+            const iframe = document.getElementById('iframe-reemplazos');
+            if (!iframe) return;
+            const base = 'https://docs.google.com/spreadsheets/d/1Er34LuDCujtnMPatu9o4AIkVQwnIQZEdB9sdx_zS8KY/edit';
+            const gids = [ '750106927', '992900695', '351364829' ];
+            const gid = gids[indice] || gids[0];
+            iframe.src = `${base}?gid=${gid}`;
+        }
+
+        // Manual PDF helpers
+        const manualFileURL = 'file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/TestPJCT/Production%20Control%20ultimate.pdf';
+        const manualHTMLURL = 'file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/TestPJCT/Manual-Control-Produccion-Ultimate.html';
+        function openManual() { window.open(manualHTMLURL, '_blank'); }
+        function downloadManual() { 
+            // Abre el manual HTML en la misma pestaña
+            window.location.href = manualHTMLURL;
+        }
+        function printManual() { 
+            // Abre en nueva pestaña el manual HTML
+            window.open(manualHTMLURL, '_blank');
+        }
+
+        // Menu navigation for manual
+        const sectionNames = {
+            'sec1-1': '1.1. Recolección de Reportes',
+            'sec1-2': '1.2. Digitación de Reportes Diarios',
+            'sec2': '2. Digitación Correcta de Reportes',
+            'sec2-1': '2.1. Coincidencia de PO Digitado',
+            'sec2-2': '2.2. Cantidad de Más de una Parte',
+            'sec2-3': '2.3. Detalles y Descripción',
+            'sec2-4': '2.4. Validación',
+            'sec2-5': '2.5. Error en Coincidencia de Estilo',
+            'sec3': '3. Actualización de Cantidades Capturadas',
+            'sec3-1': '3.1. Reporte NS',
+            'sec3-2': '3.2. Colocación de Información',
+            'sec3-3': '3.3. Guardar de Información',
+            'sec3-4': '3.4. Pegado de Información en Cuadre',
+            'sec3-5': '3.5. Verificación Automática',
+            'sec4': '4. Seguimiento de Órdenes Abiertas',
+            'sec4-1': '4.1. Selección de Órdenes Incompletas',
+            'sec4-2': '4.2. Actualización Base de Datos',
+            'sec4-3': '4.3. Marcas de Captura (Full Dye)',
+            'sec4-4': '4.4. Procedimiento para Mochilas',
+            'sec4-5': '4.5. Casilla de Verificación',
+            'sec4-6': '4.6. Anotación en INCOMPLETAS',
+            'sec4-7': '4.7. Organización y Validación',
+            'sec4-8': '4.8. Órdenes de STOCK',
+            'sec5': '5. Captura de Producción',
+            'sec5-1': '5.1. Creación de Programa',
+            'sec5-2': '5.2. Abrir Captura de Producción',
+            'sec5-3': '5.3. Insertar Información',
+            'sec5-4': '5.4. Llenado de Campos',
+            'sec5-5': '5.5. Captura de la Producción',
+            'sec6': '6. Digitación Team Spirit',
+            'sec6-1': '6.1. Subida de Archivo TS',
+            'sec6-2': '6.2. Copiar en Hoja Existente',
+            'sec6-3': '6.3. Ubicar y Nombrar Hoja',
+            'sec6-4': '6.4. Corrección de Fórmula TS',
+            'sec6-5': '6.5. Corregir Prefijos "_xlfn." y "[1]"',
+            'sec6-6': '6.6. Mostrar Celda Asignada',
+            'sec6-7': '6.7. Fórmula de Concatenación',
+            'sec6-8': '6.8. - 6.12. Proceso Filtrado Final'
+        };
+
+        function showManualSection(sectionId, sectionTitle) {
+            // Obtener elementos
+            const sidebar = document.getElementById('manualSidebar');
+            const panel = document.getElementById('manualPanel');
+            const iframe = document.getElementById('manualPanelIframe');
+            const panelTitle = document.getElementById('panelTitle');
+            
+            // Contraer sidebar
+            sidebar.classList.add('collapsed');
+            
+            // Mostrar panel
+            panel.classList.add('active');
+            
+            // Actualizar título
+            panelTitle.textContent = '📖 ' + sectionTitle;
+            
+            // Cargar iframe con la sección específica
+            const manualUrl = 'file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/TestPJCT/Manual-Control-Produccion-Ultimate.html#' + sectionId;
+            iframe.src = manualUrl;
+            
+            // Resaltar item del menú
+            document.querySelectorAll('.manual-menu-item, .manual-submenu').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('manualSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function closeManualPanel() {
+            const sidebar = document.getElementById('manualSidebar');
+            const panel = document.getElementById('manualPanel');
+            
+            // Expandir sidebar
+            sidebar.classList.remove('collapsed');
+            
+            // Ocultar panel
+            panel.classList.remove('active');
+            
+            // Limpiar resalte del menú
+            document.querySelectorAll('.manual-menu-item, .manual-submenu').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        function scrollToSection(sectionId) {
+            // Limpiar estilos de elementos previos
+            document.querySelectorAll('.manual-menu-item, .manual-submenu').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Resaltar elemento actual
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            // Obtener nombre de la sección
+            const sectionName = sectionNames[sectionId] || 'tema del manual';
+            
+            // Abrir manual en nueva pestaña navegando a la sección específica
+            const manualUrl = 'file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/TestPJCT/Manual-Control-Produccion-Ultimate.html#' + sectionId;
+            window.open(manualUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
