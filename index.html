@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Boombah 2026</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f0f2f5; color: #333; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f0f2f5; color: ##ffffff; overflow-x: hidden; }
+<script src="https://jsdelivr.net"></script>
 
         /* NAVEGACIÓN SUPERIOR */
         nav { background: #1a1a1a; padding: 0 20px; display: flex; justify-content: center; box-shadow: 0 2px 15px rgba(0,0,0,0.4); position: sticky; top: 0; z-index: 1000; }
@@ -159,17 +160,42 @@
 </head>
 <body>
 
-    <nav>
+   <nav style="background-color: #000 !important; display: flex; align-items: center; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; width: 100%;">
     <img src="file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/logo1%20(2).png" alt="Logo" style="height: 40px; margin: 10px 20px; vertical-align: middle;">
-    <button class="nav-button active" onclick="showTab('planos', this)">Buscador de Planos</button>
+    <button class="nav-button active" onclick="showTab('inicio', this)">Inicio</button>    
+    <button class="nav-button" onclick="showTab('planos', this)">Buscador de Planos</button>
     <button class="nav-button" onclick="showTab('wip', this)">Control WIP 2026</button>
     <button class="nav-button" onclick="showTab('reemplazos', this)">Historial Reemplazos</button>
     <button class="nav-button" onclick="showTab('manual', this)">Manual de Producción</button>
 
 </nav>
 
+<!-- SECCIÓN INICIO CON RESUMEN -->
+<section id="inicio" class="section active" style="padding: 20px;">
+    <h2 style="color: #4CAF50; border-bottom: 2px solid #333; padding-bottom: 10px;">Resumen de Producción</h2>
+    
+    <!-- Tarjetas Estilo Dashboard -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+        <div style="background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #2ecc71; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            <h3 style="margin: 0; font-size: 0.9em; color: #888;">TOTAL ÓRDENES</h3>
+<p id="total-ordenes" style="font-size: 2em; margin: 10px 0 0; font-weight: bold; color: white;">0</p>
+        </div>
+        <div style="background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #3498db; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            <h3 style="margin: 0; font-size: 0.9em; color: #888;">UNIDADES TOTALES</h3>
+            <p id="total-unidades" style="font-size: 2em; margin: 10px 0 0; font-weight: bold; color: white;">0</p>
+
+        </div>
+    </div>
+
+    <!-- Espacio para la Gráfica -->
+    <div style="padding: 20px; border-radius: 10px; margin-top: 20px;">
+        <canvas id="graficaResumen" style="width: 100%; max-height: 350px;"></canvas>
+    </div>
+</section>
+
+
     <!-- SECCIÓN BUSCADOR -->
-    <section id="planos" class="section active">
+    <section id="planos" class="section">
         <div class="search-container">
             <h2>Buscador de Planos</h2>
             <input type="text" id="search-input" placeholder="Código (ej: 9021)">
@@ -776,6 +802,52 @@
             const manualUrl = 'file://boombah.local/Shares/Public/Product%20Development/user/Juan%20Mercado/BD%20icm/TestPJCT/Manual-Control-Produccion-Ultimate.html#' + sectionId;
             window.open(manualUrl, '_blank');
         }
+        // --- FUNCIÓN PARA CARGAR DATOS DE GOOGLE SHEETS ---
+async function actualizarDashboard() {
+    const sheetID = '1xgUxWQOCdh7MPyjHg0dCwGhrBCfQqmXJg74NsgeEExU';
+    const gid = '929260693'; // Tu pestaña: RESUMEN + GRAFICA
+    const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vT_zIIvYsFIjeIDGp7fzy0EgKyc5mHX5P9gw1gbur3VQEPNtdy1S79FXLxihWBWzxV49_g0uqrpKUYn/pub?gid=929260693&single=true&output=csv`;
+    try {
+        const res = await fetch(url);
+        const text = await res.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = json.table.rows;
+
+        // Actualizar números en las tarjetas (Ajusta los índices según tu Excel)
+        // Ejemplo: data[fila].c[columna].v
+        if(document.getElementById('total-ordenes')) {
+            document.getElementById('total-ordenes').innerText = rows[2].c[1].v; // Celda B3 aprox
+            document.getElementById('total-unidades').innerText = rows[3].c[1].v; // Celda B4 aprox
+        }
+
+        // Crear la Gráfica
+        const ctx = document.getElementById('graficaResumen').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Corte', 'Costura', 'Terminado'],
+                datasets: [{
+                    label: 'Unidades Reales',
+                    data: [rows[18].c[2].v, rows[19].c[2].v, rows[20].c[2].v], // Ejemplo filas 19-21
+                    backgroundColor: ['#f1c40f', '#2ecc71', '#e74c3c']
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: 'white' } } },
+                scales: { y: { ticks: { color: 'white' } }, x: { ticks: { color: 'white' } } }
+            }
+        });
+    } catch (e) { console.error("Error al cargar Google Sheets:", e); }
+}
+
+// Ejecutar cuando la página esté lista
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarDashboard();
+    // Aquí puedes llamar a tu función showSection('inicio') si quieres que sea la primera
+});
+
     </script>
 </body>
 </html>
